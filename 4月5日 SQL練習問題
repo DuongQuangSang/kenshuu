@@ -1,0 +1,246 @@
+-- 50/ 全てのゴール情報を出力してください。ただし、オウンゴール（player_idがNULLのデータ）はIFNULL関数を使用してplayer_idを「9999」と表示してください。
+select
+  coalesce(player_id, '9999') as player_id
+  , goal_time 
+from
+  goals 
+order by
+  player_id desc; 
+
+-- 51/ 全てのゴール情報を出力してください。ただし、オウンゴール（player_idがNULLのデータ）はIFNULL関数を使用してplayer_idを「9999」と表示してください。
+select
+  case 
+    when player_id is null 
+      then 9999 
+    else player_id 
+    end
+  , goal_time 
+from
+  goals 
+order by
+  player_id desc; 
+
+-- 52/ 全ての選手の平均身長、平均体重を表示してください。
+select
+  round(avg(height), 4) as 平均身長
+  , round(avg(weight), 4) as 平均体重 
+from
+  players; 
+
+-- 53/ 日本の選手（player_idが714から736）が上げたゴール数を表示してください。
+select
+  count(id) as 日本のゴール数 
+from
+  goals 
+where
+  714 <= player_id 
+  and player_id <= 736                            -- 54/ オウンゴール（player_idがNULL）以外の総ゴール数を表示してください。ただし、WHERE句は使用しないでください。
+  select
+  count(player_id) as オウンゴール以外の総ゴール数 
+from
+  goals; 
+
+-- 55/ 全ての選手の中で最も高い身長と、最も重い体重を表示してください。
+select
+  max(height) as 最大身長
+  , max(weight) as 最大体重 
+from
+  players; 
+
+-- 56/ AグループのFIFAランク最上位を表示してください。
+select
+  min(ranking) as "AグループのFIFAランク最上位" 
+from
+  countries 
+where
+  group_name = 'A'; 
+
+-- 57/ CグループのFIFAランクの合計値を表示してください。
+select
+  sum(ranking) as "CグループのFIFAランクの合計値" 
+from
+  countries 
+where
+  group_name = 'C'; 
+
+-- 58/ 全ての選手の所属国と名前、背番号を表示してください。
+select
+  countries.name
+  , players.name
+  , players.uniform_num 
+from
+  players 
+  inner join countries 
+    on players.country_id = countries.id; 
+
+-- 59/ 全ての試合の国名と選手名、得点時間を表示してください。オウンゴール（player_idがNULL）は表示しないでください。
+select
+  countries.name as country_name
+  , players.name as player_name
+  , goals_tmp.goal_time 
+from
+  ( 
+    ( 
+      players 
+        inner join countries 
+          on players.country_id = countries.id
+    ) 
+      inner join goals_tmp 
+        on players.name = goals_tmp.player_name
+  ); 
+
+-- 60/ 全ての試合のゴール時間と選手名を表示してください。左側外部結合を使用してオウンゴール（player_idがNULL）も表示してください。
+select
+  goals_tmp.goal_time
+  , players.uniform_num
+  , players.position
+  , players.name 
+from
+  goals_tmp 
+  left join players 
+    on players.name = goals_tmp.player_name; 
+
+-- 61/ 全ての試合のゴール時間と選手名を表示してください。右側外部結合を使用してオウンゴール（player_idがNULL）も表示してください。
+select
+  goals_tmp.goal_time
+  , players.uniform_num
+  , players.position
+  , players.name 
+from
+  players 
+  right join goals_tmp 
+    on players.name = goals_tmp.player_name; 
+
+-- 62/ 全ての試合のゴール時間と選手名、国名を表示してください。また、オウンゴール（player_idがNULL）も表示してください。
+select
+  countries.name as country_name
+  , goals.goal_time
+  , players.position
+  , players.name as player_name 
+from
+  ( 
+    ( 
+      goals 
+        left join players 
+          on goals.player_id = players.id
+    ) 
+      left join countries 
+        on players.country_id = countries.id
+  ); 
+
+-- 63/ 全ての試合のキックオフ時間と対戦国の国名を表示してください。
+select
+  to_char(kickoff, 'yyyy-mm-dd')
+  , countries.name as my_country
+  , countries.name as enemy_country 
+from
+  pairings 
+  inner join countries 
+    on pairings.my_country_id = countries.id; 
+
+-- 64/ 全てのゴール時間と得点を上げたプレイヤー名を表示してください。オウンゴールは表示しないでください。ただし、結合は使わずに副問合せを用いてください。
+select
+  goals.id
+  , goals.goal_time
+  , ( 
+    select
+      players.name 
+    from
+      players 
+    where
+      players.id = goals.player_id
+  ) as name 
+from
+  goals 
+where
+  player_id is not null; 
+
+-- 65/ 全てのゴール時間と得点を上げたプレイヤー名を表示してください。オウンゴールは表示しないでください。ただし、副問合せは使わずに、結合を用いてください。
+select
+  goals.id
+  , goals.goal_time
+  , players.name 
+from
+  goals 
+  inner join players 
+    on goals.player_id = players.id; 
+
+-- 66/ 各ポジションごと（GK、FWなど）に最も身長と、その選手名、所属クラブを表示してください。ただし、FROM句に副問合せを使用してください。
+select
+  p1.position
+  , p1.最大身長
+  , p2.name
+  , p2.club 
+from
+  ( 
+    select
+      position
+      , max(height) as 最大身長 
+    from
+      players 
+    group by
+      position
+  ) p1 
+  left join players p2 
+    on p1.最大身長 = p2.height 
+    and p1.position = p2.position; 
+
+-- 67/ 各ポジションごと（GK、FWなど）に最も身長と、その選手名を表示してください。ただし、SELECT句に副問合せを使用してください。
+select
+  p1.position
+  , max(p1.height) as 最大身長
+  , ( 
+    select
+      p2.name 
+    from
+      players p2 
+    where
+      max(p1.height) = p2.height 
+      and p1.position = p2.position
+  ) as 名前 
+from
+  players p1 
+group by
+  p1.position; 
+
+-- 68/ 全選手の平均身長より低い選手をすべて抽出してください。表示する列は、背番号、ポジション、名前、身長としてください。
+select
+  uniform_num
+  , position
+  , name
+  , height 
+from
+  players 
+where
+  height < (select avg(height) from players); 
+
+-- 69/ 各グループの最上位と最下位を表示し、その差が50より大きいグループを抽出してください。
+select
+  group_name
+  , max(ranking) as "MAX(ranking)"
+  , min(ranking) as "MIN(ranking)" 
+from
+  countries 
+group by
+  group_name 
+having
+  max(ranking) > 50 
+order by
+  group_name; 
+
+-- 70/ 1980年生まれと、1981年生まれの選手が何人いるか調べてください。ただし、日付関数は使用せず、UNION句を使用してください。
+select
+  '1980' as 誕生年
+  , count(id) as "COUNT(id)" 
+from
+  players 
+where
+  birth between '1980-01-01' and '1980-12-31' 
+union 
+select
+  '1981' as 誕生年
+  , count(id) as "COUNT(id)" 
+from
+  players 
+where
+  birth between '1981-01-01' and '1981-12-31';
