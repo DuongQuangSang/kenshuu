@@ -1,1 +1,0 @@
-package javakyoiku05;
