@@ -1,1 +1,0 @@
-package jp.kitako.renshuumondaishuu.mesoddo;
